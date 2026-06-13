@@ -2,8 +2,7 @@
 
 namespace Convoro\Ext\Bookmarks;
 
-use App\Support\Settings;
-use App\Support\Theme;
+use App\Support\ExtPage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -61,20 +60,12 @@ class Extension extends ServiceProvider
             });
 
             // The member's saved-posts page.
-            Route::get('/bookmarks', fn () => response(self::page()));
+            Route::get('/bookmarks', fn () => self::page());
         });
     }
 
-    private static function page(): string
+    private static function page()
     {
-        $theme = Theme::css();
-        $palette = Theme::surfacePalette();
-        $chrome = Theme::chromeCss();
-        $header = Theme::siteHeader(['Bookmarks' => '/bookmarks']);
-        $font = Theme::fontStack((string) Settings::get('theme.font', 'Inter'));
-        $mode = htmlspecialchars((string) Settings::get('theme.mode', 'light'), ENT_QUOTES);
-        $name = htmlspecialchars((string) Settings::get('site.name', 'Convoro'), ENT_QUOTES);
-        $csrf = csrf_token();
         $e = fn ($v) => htmlspecialchars((string) $v, ENT_QUOTES);
 
         $rows = DB::table('bookmarks')
@@ -97,16 +88,9 @@ class Extension extends ServiceProvider
             $items = '<div class="empty">No bookmarks yet. Tap the bookmark icon on any post to save it here.</div>';
         }
 
-        return <<<HTML
-<!DOCTYPE html><html lang="en" data-theme="{$mode}"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="csrf-token" content="{$csrf}"><title>Bookmarks · {$name}</title>
-<style>{$theme}
-{$palette}
-{$chrome}
-*{box-sizing:border-box}body{margin:0;font-family:{$font};background:rgb(var(--c-bg));color:rgb(var(--c-text))}
-a{color:inherit;text-decoration:none}
-.wrap{max-width:680px;margin:0 auto;padding:32px 20px}
+        $css = <<<'CSS'
+.ext-frame a{color:inherit;text-decoration:none}
+.wrap{max-width:680px;margin:0 auto}
 h1{font-size:26px;margin:0 0 4px}.sub{color:rgb(var(--c-muted));margin:0 0 24px}
 .bm{display:flex;align-items:flex-start;gap:12px;background:rgb(var(--c-surface));border:1px solid rgb(var(--c-border));border-radius:var(--c-radius,12px);padding:14px 16px;margin-bottom:12px}
 .body{min-width:0;flex:1}.t{font-weight:700;font-size:16px;color:rgb(var(--c-text))}.t:hover{color:rgb(var(--c-primary))}
@@ -114,17 +98,18 @@ h1{font-size:26px;margin:0 0 4px}.sub{color:rgb(var(--c-muted));margin:0 0 24px}
 .rm{flex:none;border:1px solid rgb(var(--c-border));background:transparent;color:rgb(var(--c-muted));border-radius:8px;width:30px;height:30px;cursor:pointer}
 .rm:hover{border-color:#f43f5e;color:#f43f5e}
 .empty{padding:60px;text-align:center;color:rgb(var(--c-muted));border:1px dashed rgb(var(--c-border));border-radius:var(--c-radius,12px)}
-</style></head><body>
-{$header}
-<div class="wrap"><h1>🔖 Bookmarks</h1><p class="sub">Posts you've saved to read later.</p>
-<div id="list">{$items}</div></div>
-<script>
-var csrf=document.querySelector('meta[name=csrf-token]').content;
+CSS;
+
+        $bodyHtml = '<div class="wrap"><h1>🔖 Bookmarks</h1><p class="sub">Posts you\'ve saved to read later.</p>'
+            .'<div id="list">'.$items.'</div></div>';
+
+        $js = <<<'JS'
 document.querySelectorAll('.rm').forEach(function(b){b.addEventListener('click',function(){
   fetch('/api/ext/bookmarks/post/'+b.dataset.post,{method:'POST',headers:{'X-CSRF-TOKEN':csrf,Accept:'application/json'}})
     .then(function(){ var el=b.closest('.bm'); if(el) el.remove(); if(!document.querySelectorAll('.bm').length){document.getElementById('list').innerHTML='<div class="empty">No bookmarks yet.</div>';} });
 });});
-</script></body></html>
-HTML;
+JS;
+
+        return ExtPage::render('Bookmarks', $bodyHtml, $css, $js);
     }
 }
