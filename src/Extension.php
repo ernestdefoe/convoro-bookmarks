@@ -68,6 +68,9 @@ class Extension extends ServiceProvider
     private static function page(): string
     {
         $theme = Theme::css();
+        $palette = Theme::surfacePalette();
+        $chrome = Theme::chromeCss();
+        $header = Theme::siteHeader(['Bookmarks' => '/bookmarks']);
         $font = Theme::fontStack((string) Settings::get('theme.font', 'Inter'));
         $mode = htmlspecialchars((string) Settings::get('theme.mode', 'light'), ENT_QUOTES);
         $name = htmlspecialchars((string) Settings::get('site.name', 'Convoro'), ENT_QUOTES);
@@ -99,12 +102,10 @@ class Extension extends ServiceProvider
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="csrf-token" content="{$csrf}"><title>Bookmarks · {$name}</title>
 <style>{$theme}
-:root,html[data-theme="light"]{--c-bg:243 244 249;--c-surface:255 255 255;--c-surface-2:248 249 252;--c-border:230 232 240;--c-text:27 32 48;--c-text-2:74 81 104;--c-muted:138 144 166}
-html[data-theme="dark"]{--c-bg:16 18 30;--c-surface:22 25 41;--c-surface-2:28 32 52;--c-border:42 47 70;--c-text:233 235 243;--c-text-2:174 180 208;--c-muted:120 127 152}
+{$palette}
+{$chrome}
 *{box-sizing:border-box}body{margin:0;font-family:{$font};background:rgb(var(--c-bg));color:rgb(var(--c-text))}
 a{color:inherit;text-decoration:none}
-.bar{display:flex;align-items:center;gap:12px;padding:14px 24px;border-bottom:1px solid rgb(var(--c-border));background:rgb(var(--c-surface))}
-.bar b{font-weight:800}.bar .sp{flex:1}.bar .home{color:rgb(var(--c-primary));font-weight:700}
 .wrap{max-width:680px;margin:0 auto;padding:32px 20px}
 h1{font-size:26px;margin:0 0 4px}.sub{color:rgb(var(--c-muted));margin:0 0 24px}
 .bm{display:flex;align-items:flex-start;gap:12px;background:rgb(var(--c-surface));border:1px solid rgb(var(--c-border));border-radius:var(--c-radius,12px);padding:14px 16px;margin-bottom:12px}
@@ -114,7 +115,7 @@ h1{font-size:26px;margin:0 0 4px}.sub{color:rgb(var(--c-muted));margin:0 0 24px}
 .rm:hover{border-color:#f43f5e;color:#f43f5e}
 .empty{padding:60px;text-align:center;color:rgb(var(--c-muted));border:1px dashed rgb(var(--c-border));border-radius:var(--c-radius,12px)}
 </style></head><body>
-<div class="bar"><b>{$name}</b><span class="sp"></span><a class="home" href="/">← Community</a></div>
+{$header}
 <div class="wrap"><h1>🔖 Bookmarks</h1><p class="sub">Posts you've saved to read later.</p>
 <div id="list">{$items}</div></div>
 <script>
