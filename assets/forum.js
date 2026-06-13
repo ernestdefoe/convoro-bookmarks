@@ -73,22 +73,17 @@
     },
   });
 
-  // ---- Header nav link (logged-in members only). ----
-  window.Convoro.registerSlot('header:nav', {
+  // ---- User-menu link. The dropdown only renders for logged-in members, so
+  // no auth probe is needed — just match the other menu items' styling. ----
+  window.Convoro.registerSlot('user:menu', {
     ext: 'convoro-bookmarks',
     order: 6,
     mount: function (el) {
-      fetch('/api/ext/bookmarks/me', { headers: { Accept: 'application/json' } })
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (d) {
-          if (!d || !d.loggedIn) return;
-          var a = document.createElement('a');
-          a.href = '/bookmarks';
-          a.className = 'rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2';
-          a.textContent = 'Bookmarks';
-          el.appendChild(a);
-        })
-        .catch(function () {});
+      var a = document.createElement('a');
+      a.href = '/bookmarks';
+      a.className = 'block px-4 py-2.5 text-sm font-medium text-ink-2 hover:bg-surface-2 hover:text-ink';
+      a.textContent = 'Bookmarks';
+      el.appendChild(a);
     },
   });
 })();
